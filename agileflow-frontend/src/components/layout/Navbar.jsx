@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
+import GlobalSearch from '../common/GlobalSearch'
 import { Bell } from 'lucide-react'
 
 const pageTitles = {
@@ -14,12 +15,14 @@ export default function Navbar() {
 
   const title =
     pageTitles[pathname] ||
-    (pathname.includes('/projects/') ? 'Project Details' : 'AgileFlow')
+    (pathname.includes('/reports') ? 'Reports' :
+    pathname.includes('/projects/') ? 'Project Details' : 'AgileFlow')
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-      <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 gap-4">
+      <h1 className="text-xl font-semibold text-gray-800 shrink-0">{title}</h1>
+      <div className="flex items-center gap-4 ml-auto">
+        <GlobalSearch />
         <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
           <Bell size={20} />
         </button>
@@ -27,7 +30,7 @@ export default function Navbar() {
           <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
-          <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+          <span className="text-sm font-medium text-gray-700 hidden sm:block">{user?.name}</span>
         </div>
       </div>
     </header>

@@ -6,29 +6,22 @@ const errorHandler = require('./middleware/errorHandler')
 
 const app = express()
 
-// Connect DB
 connectDB()
 
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
-  credentials: true,
-}))
+app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }))
 app.use(express.json())
 
-// Routes
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/users', require('./routes/users'))
 app.use('/api/projects', require('./routes/projects'))
 app.use('/api/tasks', require('./routes/tasks'))
+app.use('/api/comments', require('./routes/comments'))
+app.use('/api/sprints', require('./routes/sprints'))
+app.use('/api/activity', require('./routes/activity'))
+app.use('/api/reports', require('./routes/reports'))
 
-// Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
-
-// 404
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }))
-
-// Error handler
 app.use(errorHandler)
 
 const PORT = process.env.PORT || 5000
