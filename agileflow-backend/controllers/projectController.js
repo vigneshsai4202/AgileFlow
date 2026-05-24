@@ -52,7 +52,12 @@ const updateProject = asyncHandler(async (req, res) => {
   const { title, description, members } = req.body
   if (title) project.title = title
   if (description !== undefined) project.description = description
-  if (members) project.members = members
+  if (members) {
+    // Always keep the creator as a member
+    const creatorId = project.createdBy.toString()
+    const hasCreator = members.some((m) => m.toString() === creatorId)
+    project.members = hasCreator ? members : [creatorId, ...members]
+  }
 
   await project.save()
   await project.populate('createdBy', 'name email')

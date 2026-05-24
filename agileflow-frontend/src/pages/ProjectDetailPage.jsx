@@ -252,7 +252,7 @@ export default function ProjectDetailPage() {
           projectId={id} members={allUsers} sprints={sprints} />
       )}
       {showEditForm && (
-        <ProjectForm onSubmit={handleUpdateProject} onClose={() => setShowEditForm(false)} initial={project} />
+        <ProjectForm onSubmit={handleUpdateProject} onClose={() => setShowEditForm(false)} initial={project} allUsers={allUsers} />
       )}
       {showSprintForm && (
         <SprintForm onSubmit={handleCreateSprint} onClose={() => setShowSprintForm(false)} projectId={id} />
