@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react'
 const pageTitles = {
   '/dashboard': 'Dashboard',
   '/projects': 'Projects',
+  '/admin': 'Admin Panel',
 }
 
 export default function Navbar() {

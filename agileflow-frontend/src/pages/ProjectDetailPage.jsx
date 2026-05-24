@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { projectService } from '../services/projectService'
 import { taskService } from '../services/taskService'
+import { userService } from '../services/userService'
 import KanbanBoard from '../components/tasks/KanbanBoard'
 import TaskForm from '../components/tasks/TaskForm'
 import ProjectForm from '../components/projects/ProjectForm'
@@ -18,18 +19,21 @@ export default function ProjectDetailPage() {
   const { user } = useAuthStore()
   const [project, setProject] = useState(null)
   const [tasks, setTasks] = useState([])
+  const [allUsers, setAllUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
 
   const load = async () => {
     try {
-      const [{ data: proj }, { data: taskList }] = await Promise.all([
+      const [{ data: proj }, { data: taskList }, { data: users }] = await Promise.all([
         projectService.getById(id),
         taskService.getByProject(id),
+        userService.getAll(),
       ])
       setProject(proj)
       setTasks(taskList)
+      setAllUsers(users)
     } catch {
       toast.error('Failed to load project')
       navigate('/projects')
@@ -175,7 +179,7 @@ export default function ProjectDetailPage() {
           onSubmit={handleCreateTask}
           onClose={() => setShowTaskForm(false)}
           projectId={id}
-          members={project.members || []}
+          members={allUsers}
         />
       )}
 

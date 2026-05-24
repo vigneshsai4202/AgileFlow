@@ -3,19 +3,22 @@ import useAuthStore from '../../store/authStore'
 import {
   LayoutDashboard,
   FolderKanban,
-  CheckSquare,
   LogOut,
   Zap,
+  ShieldCheck,
 } from 'lucide-react'
-
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/projects', icon: FolderKanban, label: 'Projects' },
-]
 
 export default function Sidebar() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+
+  const navItems = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/projects', icon: FolderKanban, label: 'Projects' },
+    ...(user?.role === 'admin'
+      ? [{ to: '/admin', icon: ShieldCheck, label: 'Admin' }]
+      : []),
+  ]
 
   const handleLogout = () => {
     logout()
@@ -60,7 +63,9 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-slate-400 text-xs truncate">{user?.role}</p>
+            <p className={`text-xs truncate ${user?.role === 'admin' ? 'text-purple-400' : 'text-slate-400'}`}>
+              {user?.role}
+            </p>
           </div>
         </div>
         <button
