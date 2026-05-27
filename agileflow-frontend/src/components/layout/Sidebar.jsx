@@ -6,6 +6,7 @@ import {
   LogOut,
   Zap,
   ShieldCheck,
+  Bell,
 } from 'lucide-react'
 
 export default function Sidebar() {
@@ -15,6 +16,7 @@ export default function Sidebar() {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
+    { to: '/notification-settings', icon: Bell, label: 'Notifications' },
     ...(user?.role === 'admin'
       ? [{ to: '/admin', icon: ShieldCheck, label: 'Admin' }]
       : []),

@@ -10,6 +10,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage'
 import AdminPage from './pages/AdminPage'
 import ReportsPage from './pages/ReportsPage'
 import NotFoundPage from './pages/NotFoundPage'
+import NotificationSettingsPage from './pages/NotificationSettingsPage'
 
 function ProtectedLayout() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/projects/:id/reports" element={<ReportsPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/notification-settings" element={<NotificationSettingsPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
