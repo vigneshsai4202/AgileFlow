@@ -63,11 +63,11 @@ npm install
 
 ### Frontend
 - **Repository**: [AgileFlow Frontend](https://github.com/vigneshsai4202/AgileFlow)
-- **Live URL**: *Update with your deployment URL*
+- **Live URL**: https://agile-flow-delta.vercel.app/dashboard
 
 ### Backend
 - **Repository**: [AgileFlow Backend](https://github.com/vigneshsai4202/AgileFlow)
-- **API Documentation**: *Update with your API docs URL*
+- **API Documentation**: 
 - **API Base URL**: *Update with your API URL* (e.g., `http://localhost:5000/api`)
 
 ## 🛠️ Development
