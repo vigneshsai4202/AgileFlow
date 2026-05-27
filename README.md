@@ -4,7 +4,7 @@ A comprehensive agile project management and workflow automation platform design
 
 ## 📋 Project Overview
 
-AgileFlow is a full-stack web application built to help teams manage their projects using agile methodologies. It provides intuitive tools for sprint planning, task tracking, team collaboration, and progress monitoring. Whether you're managing a small team or a large enterprise, AgileFlow adapts to your workflow needs.
+AgileFlow is a full-stack web application built to help teams manage their projects using agile methodologies. It provides intuitive tools for sprint planning, task tracking, team collaboration, and project tracking.
 
 ### Key Features
 
@@ -67,8 +67,8 @@ npm install
 
 ### Backend
 - **Repository**: [AgileFlow Backend](https://github.com/vigneshsai4202/AgileFlow)
-- **API Documentation**: 
-- **API Base URL**: *Update with your API URL* (e.g., `http://localhost:5000/api`)
+- **API Documentation**: [Backend README](./agileflow-backend/README.md)
+- **API Base URL**: https://agileflow-9ysj.onrender.com/api
 
 ## 🛠️ Development
 
@@ -94,8 +94,8 @@ The backend will be available at `http://localhost:5000`
 
 For detailed documentation about features, API endpoints, and configuration, please refer to:
 
-- [Frontend Documentation](./frontend/README.md)
-- [Backend Documentation](./backend/README.md)
+- [Frontend Documentation](./agileflow-frontend/README.md)
+- [Backend Documentation](./agileflow-backend/README.md)
 - [API Reference](./docs/API.md)
 
 ## 🤝 Contributing
