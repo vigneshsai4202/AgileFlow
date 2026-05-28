@@ -7,7 +7,7 @@ import { getErrorMessage } from '../utils/helpers'
 import { Zap } from 'lucide-react'
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'member' })
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const { setAuth } = useAuthStore()
   const navigate = useNavigate()
@@ -19,7 +19,7 @@ export default function RegisterPage() {
     try {
       const { data } = await authService.register(form)
       setAuth(data.user, data.token)
-      toast.success('Account created!')
+      toast.success('Admin account created!')
       navigate('/dashboard')
     } catch (err) {
       toast.error(getErrorMessage(err))
@@ -36,10 +36,13 @@ export default function RegisterPage() {
             <Zap size={24} className="text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white">AgileFlow</h1>
-          <p className="text-slate-400 mt-1">Create your workspace</p>
+          <p className="text-slate-400 mt-1">Set up your admin account</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
+          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+            This page is for the initial admin setup only. Once created, all other accounts are managed by the admin.
+          </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
@@ -73,19 +76,8 @@ export default function RegisterPage() {
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <select
-                className="input-field"
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-              >
-                <option value="member">Member</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
             <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-2">
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Creating account...' : 'Create Admin Account'}
             </button>
           </form>
 

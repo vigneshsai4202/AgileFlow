@@ -120,10 +120,19 @@ export default function ProjectDetailPage() {
     } catch (err) { toast.error(getErrorMessage(err)) }
   }
 
+  const handleSprintStatusChange = async (sprintId, status) => {
+    try {
+      const { data } = await sprintService.update(sprintId, { status })
+      setSprints((prev) => prev.map((s) => (s._id === sprintId ? data : s)))
+    } catch (err) { toast.error(getErrorMessage(err)) }
+  }
+
   if (loading) return <Spinner size="lg" />
   if (!project) return null
 
   const isOwner = project.createdBy?._id === user?._id || project.createdBy === user?._id
+  const canManage = isOwner || user?.role === 'admin'
+  const canEdit = canManage || user?.role === 'team_leader'
 
   // Apply filters
   const filteredTasks = tasks.filter((t) => {
@@ -155,14 +164,18 @@ export default function ProjectDetailPage() {
             className="btn-secondary flex items-center gap-2 text-sm">
             <BarChart2 size={15} /> Reports
           </button>
-          <button onClick={() => setShowSprintForm(true)}
-            className="btn-secondary flex items-center gap-2 text-sm">
-            <Zap size={15} /> New Sprint
-          </button>
-          <button onClick={() => setShowTaskForm(true)} className="btn-primary flex items-center gap-2">
-            <Plus size={16} /> Add Task
-          </button>
-          {isOwner && (
+          {canEdit && (
+            <>
+              <button onClick={() => setShowSprintForm(true)}
+                className="btn-secondary flex items-center gap-2 text-sm">
+                <Zap size={15} /> New Sprint
+              </button>
+              <button onClick={() => setShowTaskForm(true)} className="btn-primary flex items-center gap-2">
+                <Plus size={16} /> Add Task
+              </button>
+            </>
+          )}
+          {canManage && (
             <>
               <button onClick={() => setShowEditForm(true)} className="btn-secondary p-2"><Pencil size={16} /></button>
               <button onClick={handleDeleteProject} className="btn-danger p-2"><Trash2 size={16} /></button>
@@ -195,13 +208,30 @@ export default function ProjectDetailPage() {
             <div key={s._id} className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs">
               <Zap size={11} className="text-blue-500" />
               <span className="font-medium text-gray-700">{s.name}</span>
-              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
-                s.status === 'Active' ? 'bg-green-100 text-green-700' :
-                s.status === 'Completed' ? 'bg-gray-100 text-gray-500' : 'bg-yellow-100 text-yellow-700'
-              }`}>{s.status}</span>
-              <button onClick={() => handleDeleteSprint(s._id)} className="ml-1 text-gray-300 hover:text-red-500 transition-colors">
-                <Trash2 size={11} />
-              </button>
+              {canEdit ? (
+                <select
+                  value={s.status}
+                  onChange={(e) => handleSprintStatusChange(s._id, e.target.value)}
+                  className={`ml-1 px-1.5 py-0.5 rounded-full text-xs border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                    s.status === 'Active' ? 'bg-green-100 text-green-700' :
+                    s.status === 'Completed' ? 'bg-gray-100 text-gray-500' : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                >
+                  <option value="Planning">Planning</option>
+                  <option value="Active">Active</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              ) : (
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                  s.status === 'Active' ? 'bg-green-100 text-green-700' :
+                  s.status === 'Completed' ? 'bg-gray-100 text-gray-500' : 'bg-yellow-100 text-yellow-700'
+                }`}>{s.status}</span>
+              )}
+              {canEdit && (
+                <button onClick={() => handleDeleteSprint(s._id)} className="ml-1 text-gray-300 hover:text-red-500 transition-colors">
+                  <Trash2 size={11} />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -236,7 +266,7 @@ export default function ProjectDetailPage() {
       {/* Kanban */}
       {filteredTasks.length === 0 && tasks.length === 0 ? (
         <EmptyState icon={CheckSquare} title="No tasks yet" description="Add your first task to get started"
-          action={<button onClick={() => setShowTaskForm(true)} className="btn-primary">Add Task</button>} />
+          action={canEdit ? <button onClick={() => setShowTaskForm(true)} className="btn-primary">Add Task</button> : null} />
       ) : (
         <KanbanBoard
           tasks={filteredTasks}
@@ -252,7 +282,8 @@ export default function ProjectDetailPage() {
           projectId={id} members={allUsers} sprints={sprints} />
       )}
       {showEditForm && (
-        <ProjectForm onSubmit={handleUpdateProject} onClose={() => setShowEditForm(false)} initial={project} allUsers={allUsers} />
+        <ProjectForm onSubmit={handleUpdateProject} onClose={() => setShowEditForm(false)} initial={project}
+          allUsers={allUsers.filter((u) => u._id !== user?._id && u.role !== 'admin')} />
       )}
       {showSprintForm && (
         <SprintForm onSubmit={handleCreateSprint} onClose={() => setShowSprintForm(false)} projectId={id} />

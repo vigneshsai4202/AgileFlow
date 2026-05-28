@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { projectService } from '../services/projectService'
 import { taskService } from '../services/taskService'
+import { userService } from '../services/userService'
 import ProjectCard from '../components/projects/ProjectCard'
 import ProjectForm from '../components/projects/ProjectForm'
 import EmptyState from '../components/common/EmptyState'
@@ -8,20 +9,27 @@ import Spinner from '../components/common/Spinner'
 import toast from 'react-hot-toast'
 import { Plus, FolderKanban } from 'lucide-react'
 import { getErrorMessage } from '../utils/helpers'
+import useAuthStore from '../store/authStore'
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState([])
   const [taskStats, setTaskStats] = useState({})
+  const [allUsers, setAllUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const { user } = useAuthStore()
+  const canCreate = ['admin', 'team_leader'].includes(user?.role)
 
   const load = async () => {
     try {
-      const { data } = await projectService.getAll()
-      setProjects(data)
-      // Load task stats for each project
+      const [{ data: projectList }, { data: users }] = await Promise.all([
+        projectService.getAll(),
+        userService.getAll(),
+      ])
+      setProjects(projectList)
+      setAllUsers(users.filter((u) => u._id !== user?._id && u.role !== 'admin'))
       const stats = {}
-      await Promise.all(data.map(async (p) => {
+      await Promise.all(projectList.map(async (p) => {
         const { data: tasks } = await taskService.getByProject(p._id)
         stats[p._id] = { total: tasks.length, done: tasks.filter((t) => t.status === 'Done').length }
       }))
@@ -64,14 +72,17 @@ export default function ProjectsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-gray-500">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
-        <button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2">
-          <Plus size={16} /> New Project
-        </button>
+        {canCreate && (
+          <button onClick={() => setShowForm(true)} className="btn-primary flex items-center gap-2">
+            <Plus size={16} /> New Project
+          </button>
+        )}
       </div>
 
       {projects.length === 0 ? (
-        <EmptyState icon={FolderKanban} title="No projects yet" description="Create your first project to get started"
-          action={<button onClick={() => setShowForm(true)} className="btn-primary">Create Project</button>} />
+        <EmptyState icon={FolderKanban} title="No projects yet"
+          description={canCreate ? 'Create your first project to get started' : 'You have not been added to any projects yet'}
+          action={canCreate ? <button onClick={() => setShowForm(true)} className="btn-primary">Create Project</button> : null} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {projects.map((p) => (
@@ -80,7 +91,7 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {showForm && <ProjectForm onSubmit={handleCreate} onClose={() => setShowForm(false)} />}
+      {showForm && <ProjectForm onSubmit={handleCreate} onClose={() => setShowForm(false)} allUsers={allUsers} />}
     </div>
   )
 }

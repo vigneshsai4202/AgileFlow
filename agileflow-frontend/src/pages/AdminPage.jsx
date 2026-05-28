@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react'
 import { userService } from '../services/userService'
 import Spinner from '../components/common/Spinner'
 import EmptyState from '../components/common/EmptyState'
+import Modal from '../components/common/Modal'
 import toast from 'react-hot-toast'
 import { getErrorMessage, PRIORITY_COLORS, STATUS_COLORS } from '../utils/helpers'
-import { Users, Trash2, ChevronDown, ChevronUp, Shield, User } from 'lucide-react'
+import { Users, Trash2, ChevronDown, ChevronUp, Shield, User, UserPlus } from 'lucide-react'
 
 export default function AdminPage() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState({})
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'member' })
+  const [creating, setCreating] = useState(false)
 
   const load = async () => {
     try {
@@ -45,6 +49,22 @@ export default function AdminPage() {
       toast.success(`Role updated to ${data.role}`)
     } catch (err) {
       toast.error(getErrorMessage(err))
+    }
+  }
+
+  const handleCreateEmployee = async (e) => {
+    e.preventDefault()
+    setCreating(true)
+    try {
+      const { data } = await userService.createEmployee(createForm)
+      setUsers((prev) => [...prev, { ...data, tasks: [] }])
+      setCreateForm({ name: '', email: '', password: '', role: 'member' })
+      setShowCreateForm(false)
+      toast.success('Employee account created!')
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -88,6 +108,13 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {/* Create Employee button */}
+      <div className="flex justify-end">
+        <button onClick={() => setShowCreateForm(true)} className="btn-primary flex items-center gap-2">
+          <UserPlus size={16} /> Create Employee
+        </button>
+      </div>
+
       {/* Users table */}
       {users.length === 0 ? (
         <EmptyState icon={Users} title="No users found" />
@@ -120,10 +147,13 @@ export default function AdminPage() {
                     className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       user.role === 'admin'
                         ? 'bg-purple-100 text-purple-700'
+                        : user.role === 'team_leader'
+                        ? 'bg-blue-100 text-blue-700'
                         : 'bg-gray-100 text-gray-600'
                     }`}
                   >
                     <option value="member">member</option>
+                    <option value="team_leader">team leader</option>
                     <option value="admin">admin</option>
                   </select>
 
@@ -188,6 +218,43 @@ export default function AdminPage() {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Create Employee Modal */}
+      {showCreateForm && (
+        <Modal title="Create Employee Account" onClose={() => setShowCreateForm(false)}>
+          <form onSubmit={handleCreateEmployee} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+              <input className="input-field" placeholder="John Doe" value={createForm.name}
+                onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))} required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <input type="email" className="input-field" placeholder="employee@company.com" value={createForm.email}
+                onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+              <input type="password" className="input-field" placeholder="Min. 6 characters" value={createForm.password}
+                onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))} required minLength={6} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select className="input-field" value={createForm.role}
+                onChange={(e) => setCreateForm((f) => ({ ...f, role: e.target.value }))}>
+                <option value="member">Member</option>
+                <option value="team_leader">Team Leader</option>
+              </select>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={() => setShowCreateForm(false)} className="btn-secondary flex-1">Cancel</button>
+              <button type="submit" disabled={creating} className="btn-primary flex-1">
+                {creating ? 'Creating...' : 'Create Account'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   )

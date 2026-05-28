@@ -4,6 +4,7 @@ const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
   secure: false,
+  requireTLS: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -13,7 +14,7 @@ const transporter = nodemailer.createTransport({
 const FROM = `"AgileFlow" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`
 
 async function sendEmail(to, subject, html) {
-  if (!process.env.SMTP_HOST) return // email not configured, skip silently
+  if (!process.env.SMTP_HOST) return
   try {
     await transporter.sendMail({ from: FROM, to, subject, html })
   } catch (err) {
@@ -47,6 +48,21 @@ function statusChangeEmail(userName, taskTitle, oldStatus, newStatus) {
   }
 }
 
+function welcomeEmail(name, email, password, role) {
+  const roleLabel = role === 'team_leader' ? 'Team Leader' : role.charAt(0).toUpperCase() + role.slice(1)
+  return {
+    subject: '[AgileFlow] Your account has been created',
+    html: `<p>Hi ${name},</p>
+           <p>Your AgileFlow account has been created by the admin.</p>
+           <table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse">
+             <tr><td><strong>Role</strong></td><td>${roleLabel}</td></tr>
+             <tr><td><strong>Email</strong></td><td>${email}</td></tr>
+             <tr><td><strong>Password</strong></td><td>${password}</td></tr>
+           </table>
+           <p>Please log in at <a href="${process.env.CLIENT_URL}">${process.env.CLIENT_URL}</a> and change your password after first login.</p>`,
+  }
+}
+
 function digestEmail(userName, tasks) {
   const rows = tasks
     .map((t) => `<tr><td>${t.title}</td><td>${t.status}</td><td>${t.priority}</td><td>${t.projectId?.title || ''}</td></tr>`)
@@ -62,4 +78,4 @@ function digestEmail(userName, tasks) {
   }
 }
 
-module.exports = { sendEmail, assignmentEmail, commentEmail, statusChangeEmail, digestEmail }
+module.exports = { sendEmail, assignmentEmail, commentEmail, statusChangeEmail, digestEmail, welcomeEmail }

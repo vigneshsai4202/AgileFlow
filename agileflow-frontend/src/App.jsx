@@ -11,6 +11,7 @@ import AdminPage from './pages/AdminPage'
 import ReportsPage from './pages/ReportsPage'
 import NotFoundPage from './pages/NotFoundPage'
 import NotificationSettingsPage from './pages/NotificationSettingsPage'
+import ChangePasswordPage from './pages/ChangePasswordPage'
 
 function ProtectedLayout() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
 
         <Route element={<ProtectedLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />

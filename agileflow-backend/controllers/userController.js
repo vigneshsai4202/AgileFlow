@@ -1,6 +1,33 @@
 const User = require('../models/User')
 const Task = require('../models/Task')
 const asyncHandler = require('../utils/asyncHandler')
+const { sendEmail, welcomeEmail } = require('../utils/emailService')
+
+// POST /api/users/create  — admin only: create employee account + email credentials
+const createEmployee = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access only' })
+  }
+
+  const { name, email, password, role } = req.body
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email and password are required' })
+  }
+  if (!['team_leader', 'member'].includes(role)) {
+    return res.status(400).json({ message: 'Role must be team_leader or member' })
+  }
+
+  const exists = await User.findOne({ email })
+  if (exists) return res.status(400).json({ message: 'Email already registered' })
+
+  const user = await User.create({ name, email, password, role, mustChangePassword: true })
+
+  // Send welcome email with credentials
+  const { subject, html } = welcomeEmail(name, email, password, role)
+  sendEmail(email, subject, html)
+
+  res.status(201).json(user)
+})
 
 // GET /api/users  — all users (any logged-in user, for assign dropdown)
 const getUsers = asyncHandler(async (req, res) => {
@@ -51,8 +78,8 @@ const updateUserRole = asyncHandler(async (req, res) => {
   }
 
   const { role } = req.body
-  if (!['admin', 'member'].includes(role)) {
-    return res.status(400).json({ message: 'Role must be admin or member' })
+  if (!['admin', 'team_leader', 'member'].includes(role)) {
+    return res.status(400).json({ message: 'Role must be admin, team_leader, or member' })
   }
 
   const user = await User.findByIdAndUpdate(
@@ -65,4 +92,4 @@ const updateUserRole = asyncHandler(async (req, res) => {
   res.json(user)
 })
 
-module.exports = { getUsers, getUsersWithTasks, deleteUser, updateUserRole }
+module.exports = { createEmployee, getUsers, getUsersWithTasks, deleteUser, updateUserRole }
