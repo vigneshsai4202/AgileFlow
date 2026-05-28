@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { reportService } from '../services/reportService'
 import { activityService } from '../services/activityService'
+import { sprintService } from '../services/sprintService'
 import Spinner from '../components/common/Spinner'
+import { SprintBurndownCard, VelocityCard } from '../components/dashboard/SprintAnalyticsPanel'
 import toast from 'react-hot-toast'
 import { ArrowLeft, BarChart2 } from 'lucide-react'
 import { PRIORITY_COLORS, STATUS_COLORS, TYPE_COLORS, formatDateTime } from '../utils/helpers'
@@ -46,15 +48,27 @@ export default function ReportsPage() {
   const navigate = useNavigate()
   const [report, setReport] = useState(null)
   const [activity, setActivity] = useState([])
+  const [sprintReports, setSprintReports] = useState([])
+  const [velocity, setVelocity] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       reportService.getProjectReport(id),
       activityService.getByProject(id),
-    ]).then(([{ data: r }, { data: a }]) => {
+      sprintService.getByProject(id),
+      reportService.getVelocityReport(id),
+    ]).then(async ([{ data: r }, { data: a }, { data: sprints }, { data: vel }]) => {
       setReport(r)
       setActivity(a)
+      setVelocity(vel)
+      // Load burndown for each sprint (cap at 5)
+      const reports = await Promise.all(
+        sprints.slice(0, 5).map((s) =>
+          reportService.getSprintReport(s._id).then(({ data }) => data).catch(() => null)
+        )
+      )
+      setSprintReports(reports.filter(Boolean))
     }).catch(() => toast.error('Failed to load report'))
       .finally(() => setLoading(false))
   }, [id])
@@ -165,6 +179,21 @@ export default function ReportsPage() {
           )}
         </div>
       </div>
+
+      {/* Sprint Analytics */}
+      {(sprintReports.length > 0 || velocity?.velocity?.length > 0) && (
+        <div className="space-y-4">
+          <h2 className="text-base font-semibold text-gray-800">Sprint Analytics</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {velocity?.velocity?.length > 0 && (
+              <VelocityCard data={velocity.velocity} avgVelocity={velocity.avgVelocity} />
+            )}
+            {sprintReports.map((sr) => (
+              <SprintBurndownCard key={sr.sprint.name} report={sr} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -37,6 +37,7 @@ app.use('/api/comments', require('./routes/comments'))
 app.use('/api/sprints', require('./routes/sprints'))
 app.use('/api/activity', require('./routes/activity'))
 app.use('/api/reports', require('./routes/reports'))
+app.use('/api/notifications', require('./routes/notifications'))
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }))

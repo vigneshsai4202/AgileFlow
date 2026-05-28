@@ -1,5 +1,9 @@
 const Comment = require('../models/Comment')
+const Task = require('../models/Task')
+const Notification = require('../models/Notification')
+const User = require('../models/User')
 const asyncHandler = require('../utils/asyncHandler')
+const { sendEmail, commentEmail } = require('../utils/emailService')
 
 // GET /api/comments/:taskId
 const getComments = asyncHandler(async (req, res) => {
@@ -20,6 +24,31 @@ const addComment = asyncHandler(async (req, res) => {
     text,
   })
   await comment.populate('author', 'name email')
+
+  // Notify task assignee and creator (excluding the commenter)
+  const task = await Task.findById(req.params.taskId).select('title assignedTo createdBy projectId')
+  if (task) {
+    const toNotify = [...new Set(
+      [task.assignedTo, task.createdBy]
+        .filter(Boolean)
+        .map(String)
+        .filter((id) => id !== req.user._id.toString())
+    )]
+    for (const uid of toNotify) {
+      Notification.create({
+        userId: uid, type: 'comment',
+        title: 'New Comment',
+        message: `${req.user.name} commented on "${task.title}"`,
+        taskId: task._id, projectId: task.projectId,
+      }).catch(() => {})
+      const recipient = await User.findById(uid).select('name email notificationPrefs')
+      if (recipient?.notificationPrefs?.emailOnComment !== false) {
+        const { subject, html } = commentEmail(recipient.name, req.user.name, task.title, text)
+        sendEmail(recipient.email, subject, html)
+      }
+    }
+  }
+
   res.status(201).json(comment)
 })
 

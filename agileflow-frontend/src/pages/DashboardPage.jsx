@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { projectService } from '../services/projectService'
 import { taskService } from '../services/taskService'
+import { reportService } from '../services/reportService'
 import StatCard from '../components/dashboard/StatCard'
 import ProjectCard from '../components/projects/ProjectCard'
+import { VelocityCard } from '../components/dashboard/SprintAnalyticsPanel'
 import Spinner from '../components/common/Spinner'
 import toast from 'react-hot-toast'
 import { FolderKanban, CheckSquare, Clock, BarChart3 } from 'lucide-react'
@@ -12,6 +14,7 @@ import { PRIORITY_COLORS, STATUS_COLORS, formatDate } from '../utils/helpers'
 export default function DashboardPage() {
   const [projects, setProjects] = useState([])
   const [recentTasks, setRecentTasks] = useState([])
+  const [velocityData, setVelocityData] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
@@ -28,6 +31,16 @@ export default function DashboardPage() {
         const taskArrays = await Promise.all(taskPromises)
         const allTasks = taskArrays.flat().slice(0, 8)
         setRecentTasks(allTasks)
+
+        // Load velocity from first project that has sprints
+        if (data.length > 0) {
+          for (const p of data.slice(0, 3)) {
+            try {
+              const { data: vel } = await reportService.getVelocityReport(p._id)
+              if (vel.velocity?.length > 0) { setVelocityData(vel); break }
+            } catch {}
+          }
+        }
       } catch {
         toast.error('Failed to load dashboard')
       } finally {
@@ -117,6 +130,11 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Sprint Velocity */}
+      {velocityData && (
+        <VelocityCard data={velocityData.velocity} avgVelocity={velocityData.avgVelocity} />
+      )}
     </div>
   )
 }

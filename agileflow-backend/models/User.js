@@ -6,7 +6,14 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, minlength: 6 },
-    role: { type: String, enum: ['admin', 'member'], default: 'member' },
+    role: { type: String, enum: ['admin', 'team_leader', 'member'], default: 'member' },
+    mustChangePassword: { type: Boolean, default: false },
+    notificationPrefs: {
+      emailOnAssign: { type: Boolean, default: true },
+      emailOnComment: { type: Boolean, default: true },
+      emailOnChange: { type: Boolean, default: false },
+      dailyDigest: { type: Boolean, default: false },
+    },
   },
   { timestamps: true }
 )

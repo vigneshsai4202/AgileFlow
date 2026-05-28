@@ -1,10 +1,39 @@
 const Task = require('../models/Task')
 const Project = require('../models/Project')
 const Activity = require('../models/Activity')
+const Notification = require('../models/Notification')
+const User = require('../models/User')
 const asyncHandler = require('../utils/asyncHandler')
+const { sendEmail, assignmentEmail, statusChangeEmail } = require('../utils/emailService')
 
 const log = (projectId, taskId, user, action, detail = '') =>
   Activity.create({ projectId, taskId, user, action, detail }).catch(() => {})
+
+async function notifyUser(userId, type, title, message, taskId, projectId) {
+  Notification.create({ userId, type, title, message, taskId, projectId }).catch(() => {})
+}
+
+async function notifyAssignment(task, project, actorId) {
+  if (!task.assignedTo || task.assignedTo.toString() === actorId.toString()) return
+  const assignee = await User.findById(task.assignedTo).select('name email notificationPrefs')
+  if (!assignee) return
+  notifyUser(assignee._id, 'assignment', 'Task Assigned', `You were assigned to "${task.title}" in ${project.title}`, task._id, project._id)
+  if (assignee.notificationPrefs?.emailOnAssign !== false) {
+    const { subject, html } = assignmentEmail(assignee.name, task.title, project.title)
+    sendEmail(assignee.email, subject, html)
+  }
+}
+
+async function notifyStatusChange(task, oldStatus, newStatus, actorId) {
+  if (!task.assignedTo || task.assignedTo.toString() === actorId.toString()) return
+  const assignee = await User.findById(task.assignedTo).select('name email notificationPrefs')
+  if (!assignee) return
+  notifyUser(assignee._id, 'status_change', 'Task Status Changed', `"${task.title}" moved from ${oldStatus} to ${newStatus}`, task._id, task.projectId)
+  if (assignee.notificationPrefs?.emailOnChange) {
+    const { subject, html } = statusChangeEmail(assignee.name, task.title, oldStatus, newStatus)
+    sendEmail(assignee.email, subject, html)
+  }
+}
 
 // GET /api/tasks/project/:projectId
 const getTasksByProject = asyncHandler(async (req, res) => {
@@ -64,6 +93,7 @@ const createTask = asyncHandler(async (req, res) => {
   await task.populate('sprintId', 'name')
 
   log(projectId, task._id, req.user._id, 'created task', title)
+  if (assignedTo) await notifyAssignment(task, project, req.user._id)
   res.status(201).json(task)
 })
 
@@ -83,8 +113,13 @@ const updateTask = asyncHandler(async (req, res) => {
 
   if (req.body.status && req.body.status !== oldStatus) {
     log(task.projectId, task._id, req.user._id, 'changed status', `${oldStatus} → ${req.body.status}`)
+    await notifyStatusChange(task, oldStatus, req.body.status, req.user._id)
   } else {
     log(task.projectId, task._id, req.user._id, 'updated task', task.title)
+    if (req.body.assignedTo && req.body.assignedTo !== (task.assignedTo?._id?.toString())) {
+      const project = await Project.findById(task.projectId).select('title')
+      if (project) await notifyAssignment(task, project, req.user._id)
+    }
   }
 
   res.json(task)

@@ -7,8 +7,8 @@ const getProjects = asyncHandler(async (req, res) => {
   const projects = await Project.find({
     $or: [{ createdBy: req.user._id }, { members: req.user._id }],
   })
-    .populate('createdBy', 'name email')
-    .populate('members', 'name email')
+    .populate('createdBy', 'name email role')
+    .populate('members', 'name email role')
     .sort({ createdAt: -1 })
 
   res.json(projects)
@@ -17,8 +17,8 @@ const getProjects = asyncHandler(async (req, res) => {
 // GET /api/projects/:id
 const getProject = asyncHandler(async (req, res) => {
   const project = await Project.findById(req.params.id)
-    .populate('createdBy', 'name email')
-    .populate('members', 'name email')
+    .populate('createdBy', 'name email role')
+    .populate('members', 'name email role')
 
   if (!project) return res.status(404).json({ message: 'Project not found' })
   res.json(project)
@@ -26,17 +26,25 @@ const getProject = asyncHandler(async (req, res) => {
 
 // POST /api/projects
 const createProject = asyncHandler(async (req, res) => {
-  const { title, description } = req.body
+  if (!['admin', 'team_leader'].includes(req.user.role)) {
+    return res.status(403).json({ message: 'Only admins and team leaders can create projects' })
+  }
+
+  const { title, description, members } = req.body
   if (!title) return res.status(400).json({ message: 'Title is required' })
+
+  // Always include creator; merge with selected members
+  const memberSet = [...new Set([req.user._id.toString(), ...(members || [])])]
 
   const project = await Project.create({
     title,
     description,
     createdBy: req.user._id,
-    members: [req.user._id],
+    members: memberSet,
   })
 
-  await project.populate('createdBy', 'name email')
+  await project.populate('createdBy', 'name email role')
+  await project.populate('members', 'name email role')
   res.status(201).json(project)
 })
 
@@ -60,8 +68,8 @@ const updateProject = asyncHandler(async (req, res) => {
   }
 
   await project.save()
-  await project.populate('createdBy', 'name email')
-  await project.populate('members', 'name email')
+  await project.populate('createdBy', 'name email role')
+  await project.populate('members', 'name email role')
   res.json(project)
 })
 

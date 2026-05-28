@@ -6,6 +6,7 @@ import {
   LogOut,
   Zap,
   ShieldCheck,
+  Bell,
 } from 'lucide-react'
 
 export default function Sidebar() {
@@ -15,6 +16,7 @@ export default function Sidebar() {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/projects', icon: FolderKanban, label: 'Projects' },
+    { to: '/notification-settings', icon: Bell, label: 'Notifications' },
     ...(user?.role === 'admin'
       ? [{ to: '/admin', icon: ShieldCheck, label: 'Admin' }]
       : []),
@@ -63,8 +65,11 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-            <p className={`text-xs truncate ${user?.role === 'admin' ? 'text-purple-400' : 'text-slate-400'}`}>
-              {user?.role}
+            <p className={`text-xs truncate ${
+              user?.role === 'admin' ? 'text-purple-400' :
+              user?.role === 'team_leader' ? 'text-blue-400' : 'text-slate-400'
+            }`}>
+              {user?.role === 'team_leader' ? 'Team Leader' : user?.role}
             </p>
           </div>
         </div>
